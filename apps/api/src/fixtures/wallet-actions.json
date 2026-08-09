@@ -1,0 +1,68 @@
+[
+  {
+    "chainId": 196,
+    "tokenAddress": "0x1111111111111111111111111111111111111111",
+    "walletAddress": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "walletTag": "fund-alpha",
+    "action": "buy",
+    "occurredAt": "2026-08-08T09:00:00.000Z",
+    "transactionHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "logIndex": 0,
+    "source": "fixture"
+  },
+  {
+    "chainId": 196,
+    "tokenAddress": "0x1111111111111111111111111111111111111111",
+    "walletAddress": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "walletTag": "fund-beta",
+    "action": "buy",
+    "occurredAt": "2026-08-08T14:00:00.000Z",
+    "transactionHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "logIndex": 0,
+    "source": "fixture"
+  },
+  {
+    "chainId": 196,
+    "tokenAddress": "0x1111111111111111111111111111111111111111",
+    "walletAddress": "0xcccccccccccccccccccccccccccccccccccccccc",
+    "walletTag": "fund-gamma",
+    "action": "buy",
+    "occurredAt": "2026-08-09T01:00:00.000Z",
+    "transactionHash": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "logIndex": 0,
+    "source": "fixture"
+  },
+  {
+    "chainId": 196,
+    "tokenAddress": "0x1111111111111111111111111111111111111111",
+    "walletAddress": "0xdddddddddddddddddddddddddddddddddddddddd",
+    "walletTag": "fund-delta",
+    "action": "buy",
+    "occurredAt": "2026-08-09T08:00:00.000Z",
+    "transactionHash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "logIndex": 0,
+    "source": "fixture"
+  },
+  {
+    "chainId": 196,
+    "tokenAddress": "0x2222222222222222222222222222222222222222",
+    "walletAddress": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "walletTag": "fund-alpha",
+    "action": "buy",
+    "occurredAt": "2026-08-09T08:00:00.000Z",
+    "transactionHash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "logIndex": 0,
+    "source": "fixture"
+  },
+  {
+    "chainId": 196,
+    "tokenAddress": "0x2222222222222222222222222222222222222222",
+    "walletAddress": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "walletTag": "fund-beta",
+    "action": "buy",
+    "occurredAt": "2026-08-09T08:10:00.000Z",
+    "transactionHash": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "logIndex": 0,
+    "source": "fixture"
+  }
+]

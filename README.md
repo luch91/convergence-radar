@@ -33,6 +33,7 @@ docs/                  Public technical documentation
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Data engine](docs/data-engine.md)
 - [Delivery plan](docs/delivery-plan.md)
 - [Engineering standards](docs/engineering-standards.md)
 - [Decision record template](docs/decision-record-template.md)

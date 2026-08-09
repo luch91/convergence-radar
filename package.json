@@ -1,0 +1,14 @@
+{
+  "name": "convergence-radar",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.18.3",
+  "scripts": {
+    "build": "pnpm --filter @convergence-radar/api build",
+    "test": "pnpm --filter @convergence-radar/api test",
+    "typecheck": "pnpm --filter @convergence-radar/api typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
