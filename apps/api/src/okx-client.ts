@@ -72,7 +72,7 @@ export class OkxClient {
         response.on("end", () => {
           const body = Buffer.concat(chunks).toString("utf8");
           if (response.statusCode === undefined || response.statusCode < 200 || response.statusCode >= 300) {
-            reject(new Error(`OKX request failed with status ${response.statusCode ?? "unknown"}.`));
+            reject(new Error(this.createHttpError(response.statusCode, body)));
             return;
           }
           try {
@@ -88,5 +88,19 @@ export class OkxClient {
       });
       clientRequest.end();
     });
+  }
+
+  private createHttpError(statusCode: number | undefined, body: string): string {
+    let message = "";
+    try {
+      const response = JSON.parse(body) as { code?: unknown; msg?: unknown; message?: unknown };
+      const value = response.msg ?? response.message ?? response.code;
+      message = typeof value === "string" ? value : "";
+    } catch {
+      message = body.replace(/\s+/g, " ").slice(0, 300);
+    }
+
+    const suffix = message === "" ? "" : `: ${message}`;
+    return `OKX request failed with status ${statusCode ?? "unknown"}${suffix}.`;
   }
 }
