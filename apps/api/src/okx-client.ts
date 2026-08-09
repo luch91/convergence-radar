@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { request } from "node:https";
 
 export interface OkxCredentials {
   apiKey: string;
@@ -47,19 +48,45 @@ export class OkxClient {
       url.searchParams.set(key, value);
     }
     const requestPath = `${url.pathname}${url.search}`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: createOkxHeaders(this.credentials, "GET", requestPath)
-    });
-    if (!response.ok) {
-      throw new Error(`OKX request failed with status ${response.status}.`);
-    }
-
-    const envelope = (await response.json()) as OkxEnvelope<T>;
+    const headers = createOkxHeaders(this.credentials, "GET", requestPath);
+    const envelope = await this.readGetResponse<T>(url, headers);
     if (envelope.code !== "0") {
       throw new Error(`OKX request failed: ${envelope.msg || envelope.code}.`);
     }
 
     return envelope.data;
+  }
+
+  private readGetResponse<T>(url: URL, headers: Headers): Promise<OkxEnvelope<T>> {
+    return new Promise((resolve, reject) => {
+      const requestHeaders = Object.fromEntries(headers.entries());
+      const clientRequest = request(url, {
+        method: "GET",
+        headers: requestHeaders,
+        family: 4,
+        timeout: 30000
+      }, (response) => {
+        const chunks: Buffer[] = [];
+        response.on("data", (chunk: Buffer) => chunks.push(chunk));
+        response.on("error", reject);
+        response.on("end", () => {
+          const body = Buffer.concat(chunks).toString("utf8");
+          if (response.statusCode === undefined || response.statusCode < 200 || response.statusCode >= 300) {
+            reject(new Error(`OKX request failed with status ${response.statusCode ?? "unknown"}.`));
+            return;
+          }
+          try {
+            resolve(JSON.parse(body) as OkxEnvelope<T>);
+          } catch {
+            reject(new Error("OKX returned an invalid JSON response."));
+          }
+        });
+      });
+      clientRequest.on("error", reject);
+      clientRequest.on("timeout", () => {
+        clientRequest.destroy(new Error("OKX request timed out after 30 seconds."));
+      });
+      clientRequest.end();
+    });
   }
 }
