@@ -1,7 +1,9 @@
 export interface AppConfig {
   dataSource: "fixture" | "live";
   ingestionIntervalMs: number;
-  onchainOsApiKey?: string;
+  okxApiKey?: string;
+  okxSecretKey?: string;
+  okxPassphrase?: string;
   onchainOsBaseUrl?: string;
 }
 
@@ -30,13 +32,20 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
   };
 
   if (dataSource === "live") {
-    if (!environment.OKX_ONCHAINOS_API_KEY || !environment.OKX_ONCHAINOS_BASE_URL) {
-      throw new Error("Live data requires OKX_ONCHAINOS_API_KEY and OKX_ONCHAINOS_BASE_URL.");
+    if (
+      !environment.OKX_API_KEY ||
+      !environment.OKX_SECRET_KEY ||
+      !environment.OKX_PASSPHRASE ||
+      !environment.OKX_ONCHAINOS_BASE_URL
+    ) {
+      throw new Error("Live data requires OKX_API_KEY, OKX_SECRET_KEY, OKX_PASSPHRASE, and OKX_ONCHAINOS_BASE_URL.");
     }
 
     return {
       ...config,
-      onchainOsApiKey: environment.OKX_ONCHAINOS_API_KEY,
+      okxApiKey: environment.OKX_API_KEY,
+      okxSecretKey: environment.OKX_SECRET_KEY,
+      okxPassphrase: environment.OKX_PASSPHRASE,
       onchainOsBaseUrl: environment.OKX_ONCHAINOS_BASE_URL
     };
   }

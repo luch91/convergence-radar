@@ -6,7 +6,8 @@
   "scripts": {
     "build": "pnpm --filter @convergence-radar/api build",
     "test": "pnpm --filter @convergence-radar/api test",
-    "typecheck": "pnpm --filter @convergence-radar/api typecheck"
+    "typecheck": "pnpm --filter @convergence-radar/api typecheck",
+    "check:okx": "pnpm --filter @convergence-radar/api check:okx"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
