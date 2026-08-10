@@ -15,7 +15,7 @@ loadDotenv({ path: fileURLToPath(new URL("../../../.env", import.meta.url)) });
 
 const config = loadConfig();
 const source: WalletActivitySource = config.dataSource === "fixture"
-  ? new FixtureWalletActivitySource(new URL("../fixtures/wallet-actions.json", import.meta.url))
+  ? new FixtureWalletActivitySource(new URL("../src/fixtures/wallet-actions.json", import.meta.url))
   : new LiveWalletActivitySource(new OkxClient(config.onchainOsBaseUrl!, {
     apiKey: config.okxApiKey!,
     secretKey: config.okxSecretKey!,
