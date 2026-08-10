@@ -3,6 +3,7 @@ export interface AppConfig {
   ingestionIntervalMs: number;
   apiPort: number;
   databaseUrl?: string;
+  redisUrl?: string;
   okxApiKey?: string;
   okxSecretKey?: string;
   okxPassphrase?: string;
@@ -34,7 +35,10 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
     apiPort: readPositiveInteger(environment.API_PORT, 3000),
     ...(environment.DATABASE_URL === undefined || environment.DATABASE_URL === ""
       ? {}
-      : { databaseUrl: environment.DATABASE_URL })
+      : { databaseUrl: environment.DATABASE_URL }),
+    ...(environment.REDIS_URL === undefined || environment.REDIS_URL === ""
+      ? {}
+      : { redisUrl: environment.REDIS_URL })
   };
 
   if (dataSource === "live") {

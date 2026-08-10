@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { AuditSink } from "./audit.js";
+import type { CacheStore } from "./cache.js";
 import { requireDemoPayment } from "./payment.js";
 import { createRateLimit } from "./rate-limit.js";
 import type { DataRepository } from "./repository.js";
@@ -10,6 +11,7 @@ const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 export interface ApiDependencies {
   repository: DataRepository;
   auditSink: AuditSink;
+  cache: CacheStore;
   now?: () => Date;
 }
 
@@ -49,6 +51,14 @@ export function createApi(dependencies: ApiDependencies) {
   });
 
   app.get("/v1/crossings", requireDemoPayment("0.5"), async (_request, response) => {
+    const cacheKey = "crossings:active";
+    const cached = await dependencies.cache.get<object>(cacheKey);
+    if (cached !== undefined) {
+      response.setHeader("X-Cache", "HIT");
+      response.status(200).json(cached);
+      return;
+    }
+
     const signals = (await dependencies.repository.listSignals())
       .sort((left, right) => right.windowEnd.getTime() - left.windowEnd.getTime())
       .slice(0, 10)
@@ -60,11 +70,14 @@ export function createApi(dependencies: ApiDependencies) {
         windowEnd: signal.windowEnd.toISOString(),
         verificationStatus: signal.verificationStatus
       }));
-    response.status(200).json({
+    const payload = {
       paymentStatus: "simulated",
       source: "fixture",
       data: signals
-    });
+    };
+    await dependencies.cache.set(cacheKey, payload, 60);
+    response.setHeader("X-Cache", "MISS");
+    response.status(200).json(payload);
   });
 
   app.get("/v1/token", requireDemoPayment("0.5"), async (request, response) => {
@@ -79,7 +92,16 @@ export function createApi(dependencies: ApiDependencies) {
       return;
     }
 
-    const signal = await latestSignalForAddress(dependencies.repository, address.toLowerCase());
+    const normalizedAddress = address.toLowerCase();
+    const cacheKey = `token:${normalizedAddress}`;
+    const cached = await dependencies.cache.get<object>(cacheKey);
+    if (cached !== undefined) {
+      response.setHeader("X-Cache", "HIT");
+      response.status(200).json(cached);
+      return;
+    }
+
+    const signal = await latestSignalForAddress(dependencies.repository, normalizedAddress);
     if (signal === undefined) {
       response.status(404).json({
         error: {
@@ -90,7 +112,7 @@ export function createApi(dependencies: ApiDependencies) {
       return;
     }
 
-    response.status(200).json({
+    const payload = {
       paymentStatus: "simulated",
       source: "fixture",
       data: {
@@ -101,7 +123,10 @@ export function createApi(dependencies: ApiDependencies) {
         buyers: signal.buyerAddresses,
         verificationStatus: signal.verificationStatus
       }
-    });
+    };
+    await dependencies.cache.set(cacheKey, payload, 60);
+    response.setHeader("X-Cache", "MISS");
+    response.status(200).json(payload);
   });
 
   app.use((_request, response) => {

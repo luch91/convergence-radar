@@ -15,6 +15,8 @@ The service listens on `http://localhost:3000` by default. Set `API_PORT` in `.e
 
 Set `DATABASE_URL` in `.env` to use PostgreSQL. Run `pnpm db:migrate` before starting the API. Without `DATABASE_URL`, the service uses in-memory storage for tests and local fixtures.
 
+Set `REDIS_URL` in `.env` to use Redis. The API uses an in-memory cache when the value is absent or Redis is unavailable. Cached successful signal responses expire after 60 seconds. The `X-Cache` response header is `MISS` for a new cache entry and `HIT` for a cached response.
+
 ## Endpoints
 
 ### `GET /health`
