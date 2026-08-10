@@ -1,5 +1,7 @@
 import { config as loadDotenv } from "dotenv";
 import { fileURLToPath } from "node:url";
+import { createApi } from "./app.js";
+import { InMemoryAuditSink } from "./audit.js";
 import { loadConfig } from "./config.js";
 import type { WalletActivitySource } from "./data-source.js";
 import { FixtureWalletActivitySource } from "./fixture-source.js";
@@ -20,5 +22,12 @@ const source: WalletActivitySource = config.dataSource === "fixture"
     passphrase: config.okxPassphrase!
   }));
 
-const service = new IngestionService(source, new InMemoryDataRepository());
-startIngestionSchedule(service, config.ingestionIntervalMs);
+const repository = new InMemoryDataRepository();
+const service = new IngestionService(source, repository);
+await service.run();
+startIngestionSchedule(service, config.ingestionIntervalMs, false);
+
+const api = createApi({ repository, auditSink: new InMemoryAuditSink() });
+api.listen(config.apiPort, () => {
+  console.log(`API service listening on port ${config.apiPort}.`);
+});

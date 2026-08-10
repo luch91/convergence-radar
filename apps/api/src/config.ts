@@ -1,6 +1,7 @@
 export interface AppConfig {
   dataSource: "fixture" | "live";
   ingestionIntervalMs: number;
+  apiPort: number;
   okxApiKey?: string;
   okxSecretKey?: string;
   okxPassphrase?: string;
@@ -28,7 +29,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
 
   const config: AppConfig = {
     dataSource,
-    ingestionIntervalMs: readPositiveInteger(environment.INGESTION_INTERVAL_MS, 300000)
+    ingestionIntervalMs: readPositiveInteger(environment.INGESTION_INTERVAL_MS, 300000),
+    apiPort: readPositiveInteger(environment.API_PORT, 3000)
   };
 
   if (dataSource === "live") {
