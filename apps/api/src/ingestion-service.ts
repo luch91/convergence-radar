@@ -26,10 +26,10 @@ export class IngestionService {
       }
     }
 
-    const saved = this.repository.saveActions(normalized);
+    const saved = await this.repository.saveActions(normalized);
     const now = this.clock();
-    const signals = detectConvergences(this.repository.listActions(), now);
-    this.repository.saveSignals(signals);
+    const signals = detectConvergences(await this.repository.listActions(), now);
+    await this.repository.saveSignals(signals);
     this.lastRunAt = now;
 
     return {

@@ -8,7 +8,8 @@
     "test": "pnpm --filter @convergence-radar/api test",
     "typecheck": "pnpm --filter @convergence-radar/api typecheck",
     "check:okx": "pnpm --filter @convergence-radar/api check:okx",
-    "dev": "pnpm --filter @convergence-radar/api dev"
+    "dev": "pnpm --filter @convergence-radar/api dev",
+    "db:migrate": "pnpm --filter @convergence-radar/api db:migrate"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

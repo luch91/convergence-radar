@@ -8,7 +8,7 @@ import { FixtureWalletActivitySource } from "./fixture-source.js";
 import { IngestionService } from "./ingestion-service.js";
 import { LiveWalletActivitySource } from "./live-source.js";
 import { OkxClient } from "./okx-client.js";
-import { InMemoryDataRepository } from "./repository.js";
+import { InMemoryDataRepository, PostgresDataRepository } from "./repository.js";
 import { startIngestionSchedule } from "./scheduler.js";
 
 loadDotenv({ path: fileURLToPath(new URL("../../../.env", import.meta.url)) });
@@ -22,7 +22,9 @@ const source: WalletActivitySource = config.dataSource === "fixture"
     passphrase: config.okxPassphrase!
   }));
 
-const repository = new InMemoryDataRepository();
+const repository = config.databaseUrl === undefined
+  ? new InMemoryDataRepository()
+  : new PostgresDataRepository(config.databaseUrl);
 const service = new IngestionService(source, repository);
 await service.run();
 startIngestionSchedule(service, config.ingestionIntervalMs, false);

@@ -13,8 +13,8 @@ export interface ApiDependencies {
   now?: () => Date;
 }
 
-function latestSignalForAddress(repository: DataRepository, address: string) {
-  return repository.listSignals()
+async function latestSignalForAddress(repository: DataRepository, address: string) {
+  return (await repository.listSignals())
     .filter((signal) => signal.tokenAddress === address)
     .sort((left, right) => right.windowEnd.getTime() - left.windowEnd.getTime())[0];
 }
@@ -48,8 +48,8 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json({ status: "ok" });
   });
 
-  app.get("/v1/crossings", requireDemoPayment("0.5"), (_request, response) => {
-    const signals = dependencies.repository.listSignals()
+  app.get("/v1/crossings", requireDemoPayment("0.5"), async (_request, response) => {
+    const signals = (await dependencies.repository.listSignals())
       .sort((left, right) => right.windowEnd.getTime() - left.windowEnd.getTime())
       .slice(0, 10)
       .map((signal) => ({
@@ -67,7 +67,7 @@ export function createApi(dependencies: ApiDependencies) {
     });
   });
 
-  app.get("/v1/token", requireDemoPayment("0.5"), (request, response) => {
+  app.get("/v1/token", requireDemoPayment("0.5"), async (request, response) => {
     const address = request.query.address;
     if (typeof address !== "string" || !ADDRESS_PATTERN.test(address)) {
       response.status(400).json({
@@ -79,7 +79,7 @@ export function createApi(dependencies: ApiDependencies) {
       return;
     }
 
-    const signal = latestSignalForAddress(dependencies.repository, address.toLowerCase());
+    const signal = await latestSignalForAddress(dependencies.repository, address.toLowerCase());
     if (signal === undefined) {
       response.status(404).json({
         error: {

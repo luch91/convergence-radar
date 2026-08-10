@@ -25,7 +25,7 @@ afterEach(async () => {
   await Promise.all(closingServers);
 });
 
-function saveSignal(repository: InMemoryDataRepository): void {
+async function saveSignal(repository: InMemoryDataRepository): Promise<void> {
   const signal: ConvergenceSignal = {
     id: "a".repeat(64),
     chainId: 196,
@@ -43,7 +43,7 @@ function saveSignal(repository: InMemoryDataRepository): void {
     sourceActionIds: ["one", "two", "three", "four"],
     verificationStatus: "unverified"
   };
-  repository.saveSignals([signal]);
+  await repository.saveSignals([signal]);
 }
 
 describe("API service", () => {
@@ -60,7 +60,7 @@ describe("API service", () => {
 
   it("returns a simulated paid token result", async () => {
     const repository = new InMemoryDataRepository();
-    saveSignal(repository);
+    await saveSignal(repository);
     const response = await request(
       createApi({ repository, auditSink: new InMemoryAuditSink() }),
       "/v1/token?address=0x1111111111111111111111111111111111111111",

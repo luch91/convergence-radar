@@ -13,6 +13,8 @@ pnpm dev
 
 The service listens on `http://localhost:3000` by default. Set `API_PORT` in `.env` to use a different port.
 
+Set `DATABASE_URL` in `.env` to use PostgreSQL. Run `pnpm db:migrate` before starting the API. Without `DATABASE_URL`, the service uses in-memory storage for tests and local fixtures.
+
 ## Endpoints
 
 ### `GET /health`
