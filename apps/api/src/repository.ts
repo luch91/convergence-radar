@@ -103,7 +103,15 @@ export class PostgresDataRepository implements DataRepository {
   private readonly pool: Pool;
 
   constructor(connectionString: string) {
-    this.pool = new Pool({ connectionString });
+    this.pool = new Pool({
+      connectionString,
+      connectionTimeoutMillis: 15_000,
+      idleTimeoutMillis: 10_000,
+      max: 5
+    });
+    this.pool.on("error", (error) => {
+      console.error("PostgreSQL idle connection failed.", error.message);
+    });
   }
 
   async saveActions(actions: WalletAction[]): Promise<{ accepted: WalletAction[]; duplicateCount: number }> {
