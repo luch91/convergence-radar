@@ -1,9 +1,12 @@
+import type { PaymentMode } from "./payment.js";
+
 export interface AppConfig {
   dataSource: "fixture" | "live";
   ingestionIntervalMs: number;
   apiPort: number;
   databaseUrl?: string;
   redisUrl?: string;
+  paymentMode: PaymentMode;
   okxApiKey?: string;
   okxSecretKey?: string;
   okxPassphrase?: string;
@@ -29,10 +32,16 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
     throw new Error("DATA_SOURCE must be fixture or live.");
   }
 
+  const paymentMode = environment.PAYMENT_MODE ?? "disabled";
+  if (paymentMode !== "disabled" && paymentMode !== "demo") {
+    throw new Error("PAYMENT_MODE must be disabled or demo.");
+  }
+
   const config: AppConfig = {
     dataSource,
     ingestionIntervalMs: readPositiveInteger(environment.INGESTION_INTERVAL_MS, 300000),
-    apiPort: readPositiveInteger(environment.API_PORT, 3000),
+    apiPort: readPositiveInteger(environment.PORT ?? environment.API_PORT, 3000),
+    paymentMode,
     ...(environment.DATABASE_URL === undefined || environment.DATABASE_URL === ""
       ? {}
       : { databaseUrl: environment.DATABASE_URL }),

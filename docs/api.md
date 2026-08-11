@@ -4,6 +4,8 @@
 
 The API uses fixture data and a demo payment challenge. It does not settle a payment. Do not use it for production payment processing.
 
+The default payment mode is `disabled`. In that mode, protected endpoints return HTTP 503. Set `PAYMENT_MODE=demo` only for local testing. Do not use demo mode in a public deployment.
+
 ## Run the service
 
 ```text
@@ -12,6 +14,8 @@ pnpm dev
 ```
 
 The service listens on `http://localhost:3000` by default. Set `API_PORT` in `.env` to use a different port.
+
+The service uses the `PORT` environment variable when a hosting provider supplies it. This is required by hosted web-service platforms.
 
 Set `DATABASE_URL` in `.env` to use PostgreSQL. Run `pnpm db:migrate` before starting the API. Without `DATABASE_URL`, the service uses in-memory storage for tests and local fixtures.
 

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { AuditSink } from "./audit.js";
 import type { CacheStore } from "./cache.js";
-import { requireDemoPayment } from "./payment.js";
+import { requirePayment, type PaymentMode } from "./payment.js";
 import { createRateLimit } from "./rate-limit.js";
 import type { DataRepository } from "./repository.js";
 
@@ -12,6 +12,7 @@ export interface ApiDependencies {
   repository: DataRepository;
   auditSink: AuditSink;
   cache: CacheStore;
+  paymentMode: PaymentMode;
   now?: () => Date;
 }
 
@@ -50,7 +51,7 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json({ status: "ok" });
   });
 
-  app.get("/v1/crossings", requireDemoPayment("0.5"), async (_request, response) => {
+  app.get("/v1/crossings", requirePayment(dependencies.paymentMode, "0.5"), async (_request, response) => {
     const cacheKey = "crossings:active";
     const cached = await dependencies.cache.get<object>(cacheKey);
     if (cached !== undefined) {
@@ -80,7 +81,7 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json(payload);
   });
 
-  app.get("/v1/token", requireDemoPayment("0.5"), async (request, response) => {
+  app.get("/v1/token", requirePayment(dependencies.paymentMode, "0.5"), async (request, response) => {
     const address = request.query.address;
     if (typeof address !== "string" || !ADDRESS_PATTERN.test(address)) {
       response.status(400).json({

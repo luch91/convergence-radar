@@ -36,6 +36,7 @@ docs/                  Public technical documentation
 - [Data engine](docs/data-engine.md)
 - [API service](docs/api.md)
 - [Database](docs/database.md)
+- [Deployment](docs/deployment.md)
 - [Delivery plan](docs/delivery-plan.md)
 - [Engineering standards](docs/engineering-standards.md)
 - [Decision record template](docs/decision-record-template.md)

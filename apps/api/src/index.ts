@@ -31,7 +31,12 @@ await service.run();
 startIngestionSchedule(service, config.ingestionIntervalMs, false);
 
 const cache = await createCacheStore(config.redisUrl);
-const api = createApi({ repository, auditSink: new InMemoryAuditSink(), cache });
-api.listen(config.apiPort, () => {
+const api = createApi({
+  repository,
+  auditSink: new InMemoryAuditSink(),
+  cache,
+  paymentMode: config.paymentMode
+});
+api.listen(config.apiPort, "0.0.0.0", () => {
   console.log(`API service listening on port ${config.apiPort}.`);
 });

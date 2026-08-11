@@ -50,7 +50,7 @@ async function saveSignal(repository: InMemoryDataRepository): Promise<void> {
 describe("API service", () => {
   it("returns a payment challenge for an unpaid request", async () => {
     const repository = new InMemoryDataRepository();
-    const response = await request(createApi({ repository, auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore() }), "/v1/crossings");
+    const response = await request(createApi({ repository, auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore(), paymentMode: "demo" }), "/v1/crossings");
 
     expect(response.status).toBe(402);
     expect(await response.json()).toMatchObject({
@@ -63,7 +63,7 @@ describe("API service", () => {
     const repository = new InMemoryDataRepository();
     await saveSignal(repository);
     const response = await request(
-      createApi({ repository, auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore() }),
+      createApi({ repository, auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore(), paymentMode: "demo" }),
       "/v1/token?address=0x1111111111111111111111111111111111111111",
       { "payment-signature": "demo-authorization" }
     );
@@ -77,7 +77,7 @@ describe("API service", () => {
 
   it("rejects an invalid token address after payment", async () => {
     const response = await request(
-      createApi({ repository: new InMemoryDataRepository(), auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore() }),
+      createApi({ repository: new InMemoryDataRepository(), auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore(), paymentMode: "demo" }),
       "/v1/token?address=invalid",
       { "payment-signature": "demo-authorization" }
     );
@@ -89,7 +89,7 @@ describe("API service", () => {
   it("caches a paid token result for later paid requests", async () => {
     const repository = new InMemoryDataRepository();
     await saveSignal(repository);
-    const app = createApi({ repository, auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore() });
+    const app = createApi({ repository, auditSink: new InMemoryAuditSink(), cache: new InMemoryCacheStore(), paymentMode: "demo" });
     const headers = { "payment-signature": "demo-authorization" };
 
     const first = await request(app, "/v1/token?address=0x1111111111111111111111111111111111111111", headers);
@@ -97,5 +97,20 @@ describe("API service", () => {
 
     expect(first.headers.get("x-cache")).toBe("MISS");
     expect(second.headers.get("x-cache")).toBe("HIT");
+  });
+
+  it("does not expose protected endpoints when payment is disabled", async () => {
+    const response = await request(
+      createApi({
+        repository: new InMemoryDataRepository(),
+        auditSink: new InMemoryAuditSink(),
+        cache: new InMemoryCacheStore(),
+        paymentMode: "disabled"
+      }),
+      "/v1/crossings"
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: { code: "payment_not_configured" } });
   });
 });
