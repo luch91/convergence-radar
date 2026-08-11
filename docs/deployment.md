@@ -19,7 +19,8 @@ Do not set `PORT`. The hosting provider supplies it.
 | Field | Value |
 | --- | --- |
 | Runtime | Node |
-| Build command | `corepack enable && pnpm install --frozen-lockfile && pnpm build` |
+| Node version | `22.22.2` |
+| Build command | `pnpm install --frozen-lockfile && pnpm build` |
 | Start command | `pnpm --filter @convergence-radar/api start` |
 | Health check path | `/health` |
 

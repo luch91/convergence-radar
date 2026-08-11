@@ -2,6 +2,9 @@
   "name": "convergence-radar",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.22.2 <23"
+  },
   "packageManager": "pnpm@10.18.3",
   "scripts": {
     "build": "pnpm --filter @convergence-radar/api build",
