@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import express, { type NextFunction, type Request, type Response } from "express";
+import express, { type NextFunction, type Request, type RequestHandler, type Response } from "express";
 import type { AuditSink } from "./audit.js";
 import type { CacheStore } from "./cache.js";
-import { requirePayment, type OkxPaymentConfig, type PaymentMode } from "./payment.js";
+import { requirePayment, type PaymentMode } from "./payment.js";
 import { createRateLimit } from "./rate-limit.js";
 import type { DataRepository } from "./repository.js";
 
@@ -13,7 +13,7 @@ export interface ApiDependencies {
   auditSink: AuditSink;
   cache: CacheStore;
   paymentMode: PaymentMode;
-  okxPaymentConfig?: OkxPaymentConfig;
+  paymentMiddleware?: RequestHandler;
   now?: () => Date;
 }
 
@@ -53,7 +53,10 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json({ status: "ok" });
   });
 
-  app.get("/v1/crossings", requirePayment(dependencies.paymentMode, "0.5", dependencies.okxPaymentConfig), async (_request, response) => {
+  const protectedRoute = dependencies.paymentMiddleware
+    ?? requirePayment(dependencies.paymentMode === "okx" ? "disabled" : dependencies.paymentMode, "0.5");
+
+  app.get("/v1/crossings", protectedRoute, async (_request, response) => {
     const cacheKey = "crossings:active";
     const cached = await dependencies.cache.get<object>(cacheKey);
     if (cached !== undefined) {
@@ -83,7 +86,7 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json(payload);
   });
 
-  app.get("/v1/token", requirePayment(dependencies.paymentMode, "0.5", dependencies.okxPaymentConfig), async (request, response) => {
+  app.get("/v1/token", protectedRoute, async (request, response) => {
     const address = request.query.address;
     if (typeof address !== "string" || !ADDRESS_PATTERN.test(address)) {
       response.status(400).json({

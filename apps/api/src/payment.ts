@@ -20,60 +20,47 @@ export interface OkxPaymentConfig {
   payToAddress: string;
 }
 
-export function requirePayment(
-  paymentMode: PaymentMode,
-  priceUsdt: string,
-  okxConfig?: OkxPaymentConfig
-): RequestHandler {
-  if (paymentMode === "okx") {
-    if (okxConfig === undefined) {
-      throw new Error("OKX payment mode requires payment configuration.");
-    }
+export async function createOkxPaymentMiddleware(
+  okxConfig: OkxPaymentConfig,
+  priceUsdt: string
+): Promise<RequestHandler> {
+  const facilitator = new OKXFacilitatorClient({
+    apiKey: okxConfig.apiKey,
+    secretKey: okxConfig.secretKey,
+    passphrase: okxConfig.passphrase,
+    syncSettle: true
+  });
+  const resourceServer = new x402ResourceServer(facilitator)
+    .register("eip155:196", new ExactEvmScheme());
+  await resourceServer.initialize();
 
-    const facilitator = new OKXFacilitatorClient({
-      apiKey: okxConfig.apiKey,
-      secretKey: okxConfig.secretKey,
-      passphrase: okxConfig.passphrase,
-      syncSettle: true
-    });
-    void facilitator.getSupported().then((supported) => {
-      const capabilities = supported.kinds
-        .map((kind) => `${kind.x402Version}:${kind.scheme}:${kind.network}`)
-        .join(", ");
-      console.info(`OKX x402 supported payment capabilities: ${capabilities}`);
-    }).catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      console.error(`OKX x402 capability check failed: ${message}`);
-    });
-    const resourceServer = new x402ResourceServer(facilitator)
-      .register("eip155:196", new ExactEvmScheme());
-
-    return paymentMiddleware({
-      "GET /v1/crossings": {
-        accepts: {
-          scheme: "exact",
-          network: "eip155:196",
-          payTo: okxConfig.payToAddress,
-          price: `$${priceUsdt}`,
-          maxTimeoutSeconds: 60
-        },
-        description: "Access active convergence signals.",
-        mimeType: "application/json"
+  return paymentMiddleware({
+    "GET /v1/crossings": {
+      accepts: {
+        scheme: "exact",
+        network: "eip155:196",
+        payTo: okxConfig.payToAddress,
+        price: `$${priceUsdt}`,
+        maxTimeoutSeconds: 60
       },
-      "GET /v1/token": {
-        accepts: {
-          scheme: "exact",
-          network: "eip155:196",
-          payTo: okxConfig.payToAddress,
-          price: `$${priceUsdt}`,
-          maxTimeoutSeconds: 60
-        },
-        description: "Access a token convergence signal.",
-        mimeType: "application/json"
-      }
-    }, resourceServer, undefined, undefined, true);
-  }
+      description: "Access active convergence signals.",
+      mimeType: "application/json"
+    },
+    "GET /v1/token": {
+      accepts: {
+        scheme: "exact",
+        network: "eip155:196",
+        payTo: okxConfig.payToAddress,
+        price: `$${priceUsdt}`,
+        maxTimeoutSeconds: 60
+      },
+      description: "Access a token convergence signal.",
+      mimeType: "application/json"
+    }
+  }, resourceServer, undefined, undefined, false);
+}
 
+export function requirePayment(paymentMode: Exclude<PaymentMode, "okx">, priceUsdt: string): RequestHandler {
   return (request: Request, response: Response, next: NextFunction): void => {
     if (paymentMode === "disabled") {
       request.paymentState = "absent";
