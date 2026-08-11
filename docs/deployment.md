@@ -37,3 +37,9 @@ Request the public `/health` endpoint. It must return HTTP 200. Confirm that a p
 The service uses the official OKX x402 Express SDK. It protects `GET /v1/crossings` and `GET /v1/token` with an exact payment of 0.5 USDT0 on X Layer.
 
 Keep `PAYMENT_MODE=disabled` until the application code is deployed and a controlled buyer test is planned. To enable payment settlement, set `PAYMENT_MODE=okx` in Render and deploy the current release. This change can settle valid buyer authorizations. Verify the recipient address before you enable it.
+
+## Controlled payment test
+
+Use a separate buyer wallet. Fund it with at least 0.5 USDT0 on X Layer. Do not use the recipient wallet as the buyer wallet.
+
+Set `BUYER_PRIVATE_KEY` and `CONFIRM_LIVE_PAYMENT=yes` in the local `.env` file. Do not commit this file or send the private key to another person. Run `pnpm --filter @convergence-radar/api test:x402` from the repository root. The command sends one live payment of 0.5 USDT0 to the configured recipient.

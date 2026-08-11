@@ -23,6 +23,9 @@ importers:
       '@okxweb3/x402-express':
         specifier: ^0.1.1
         version: 0.1.1(express@5.2.1)(typescript@5.9.3)
+      '@okxweb3/x402-fetch':
+        specifier: ^0.1.0
+        version: 0.1.0(typescript@5.9.3)
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
@@ -35,6 +38,9 @@ importers:
       redis:
         specifier: 4.7.1
         version: 4.7.1
+      viem:
+        specifier: ^2.55.13
+        version: 2.55.13(typescript@5.9.3)(zod@3.25.76)
     devDependencies:
       '@types/express':
         specifier: ^5.0.3
@@ -244,6 +250,9 @@ packages:
     resolution: {integrity: sha512-7bTQoEASJyxElHxqQTtZjWg51vIw49BVxrTNhMhLGiF0Wv6Z+wbnZmonH3pkBY4wZykCmmsAGXzaKAZkvQawHA==}
     peerDependencies:
       express: ^4.0.0 || ^5.0.0
+
+  '@okxweb3/x402-fetch@0.1.0':
+    resolution: {integrity: sha512-gwKpevwH98DOqlF0gepxtPBxf/HE177jyCDs6DGHqTf0FvtiwpVGPc/pPEr++Rc60PtYvE04frJBScPw/4qe6w==}
 
   '@redis/bloom@1.2.0':
     resolution: {integrity: sha512-HG2DFjYKbpNmVXsa0keLHp/3leGJz1mjh09f2RLGGLQZzSHpkmZWuwJbAvo3QcRY8p80m5+ZdXZdYOSBLlp7Cg==}
@@ -1191,6 +1200,16 @@ snapshots:
     dependencies:
       '@okxweb3/x402-core': 0.1.0
       express: 5.2.1
+      viem: 2.55.13(typescript@5.9.3)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+
+  '@okxweb3/x402-fetch@0.1.0(typescript@5.9.3)':
+    dependencies:
+      '@okxweb3/x402-core': 0.1.0
       viem: 2.55.13(typescript@5.9.3)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
