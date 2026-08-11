@@ -1,4 +1,4 @@
-import type { PaymentMode } from "./payment.js";
+import type { OkxPaymentConfig, PaymentMode } from "./payment.js";
 
 export interface AppConfig {
   dataSource: "fixture" | "live";
@@ -7,6 +7,7 @@ export interface AppConfig {
   databaseUrl?: string;
   redisUrl?: string;
   paymentMode: PaymentMode;
+  okxPaymentConfig?: OkxPaymentConfig;
   okxApiKey?: string;
   okxSecretKey?: string;
   okxPassphrase?: string;
@@ -33,8 +34,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
   }
 
   const paymentMode = environment.PAYMENT_MODE ?? "disabled";
-  if (paymentMode !== "disabled" && paymentMode !== "demo") {
-    throw new Error("PAYMENT_MODE must be disabled or demo.");
+  if (paymentMode !== "disabled" && paymentMode !== "demo" && paymentMode !== "okx") {
+    throw new Error("PAYMENT_MODE must be disabled, demo, or okx.");
   }
 
   const config: AppConfig = {
@@ -50,23 +51,39 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
       : { redisUrl: environment.REDIS_URL })
   };
 
-  if (dataSource === "live") {
+  if (dataSource === "live" || paymentMode === "okx") {
     if (
       !environment.OKX_API_KEY ||
       !environment.OKX_SECRET_KEY ||
       !environment.OKX_PASSPHRASE ||
-      !environment.OKX_ONCHAINOS_BASE_URL
+      (dataSource === "live" && !environment.OKX_ONCHAINOS_BASE_URL)
     ) {
-      throw new Error("Live data requires OKX_API_KEY, OKX_SECRET_KEY, OKX_PASSPHRASE, and OKX_ONCHAINOS_BASE_URL.");
+      throw new Error("OKX configuration requires API credentials and an OnchainOS base URL for live data.");
     }
 
-    return {
-      ...config,
-      okxApiKey: environment.OKX_API_KEY,
-      okxSecretKey: environment.OKX_SECRET_KEY,
-      okxPassphrase: environment.OKX_PASSPHRASE,
-      onchainOsBaseUrl: environment.OKX_ONCHAINOS_BASE_URL
-    };
+    if (paymentMode === "okx") {
+      const payToAddress = environment.PAY_TO_ADDRESS;
+      if (payToAddress === undefined || !/^0x[a-fA-F0-9]{40}$/.test(payToAddress)) {
+        throw new Error("OKX payment mode requires a valid PAY_TO_ADDRESS.");
+      }
+
+      config.okxPaymentConfig = {
+        apiKey: environment.OKX_API_KEY,
+        secretKey: environment.OKX_SECRET_KEY,
+        passphrase: environment.OKX_PASSPHRASE,
+        payToAddress
+      };
+    }
+
+    if (dataSource === "live") {
+      return {
+        ...config,
+        okxApiKey: environment.OKX_API_KEY,
+        okxSecretKey: environment.OKX_SECRET_KEY,
+        okxPassphrase: environment.OKX_PASSPHRASE,
+        onchainOsBaseUrl: environment.OKX_ONCHAINOS_BASE_URL!
+      };
+    }
   }
 
   return config;

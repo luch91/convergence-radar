@@ -35,7 +35,8 @@ const api = createApi({
   repository,
   auditSink: new InMemoryAuditSink(),
   cache,
-  paymentMode: config.paymentMode
+  paymentMode: config.paymentMode,
+  ...(config.okxPaymentConfig === undefined ? {} : { okxPaymentConfig: config.okxPaymentConfig })
 });
 api.listen(config.apiPort, "0.0.0.0", () => {
   console.log(`API service listening on port ${config.apiPort}.`);

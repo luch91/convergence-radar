@@ -13,6 +13,9 @@
     "db:migrate": "tsx src/migrate.ts"
   },
   "dependencies": {
+    "@okxweb3/x402-core": "^0.1.0",
+    "@okxweb3/x402-evm": "^0.2.1",
+    "@okxweb3/x402-express": "^0.1.1",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "pg": "8.16.3",
@@ -20,8 +23,8 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/pg": "^8.15.5",
     "@types/node": "^22.18.12",
+    "@types/pg": "^8.15.5",
     "tsx": "^4.20.6",
     "vitest": "^3.2.4"
   }

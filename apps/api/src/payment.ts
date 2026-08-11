@@ -1,3 +1,6 @@
+import { OKXFacilitatorClient } from "@okxweb3/x402-core";
+import { ExactEvmScheme } from "@okxweb3/x402-evm/exact/server";
+import { paymentMiddleware, x402ResourceServer } from "@okxweb3/x402-express";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 declare global {
@@ -8,9 +11,60 @@ declare global {
   }
 }
 
-export type PaymentMode = "disabled" | "demo";
+export type PaymentMode = "disabled" | "demo" | "okx";
 
-export function requirePayment(paymentMode: PaymentMode, priceUsdt: string): RequestHandler {
+export interface OkxPaymentConfig {
+  apiKey: string;
+  secretKey: string;
+  passphrase: string;
+  payToAddress: string;
+}
+
+export function requirePayment(
+  paymentMode: PaymentMode,
+  priceUsdt: string,
+  okxConfig?: OkxPaymentConfig
+): RequestHandler {
+  if (paymentMode === "okx") {
+    if (okxConfig === undefined) {
+      throw new Error("OKX payment mode requires payment configuration.");
+    }
+
+    const facilitator = new OKXFacilitatorClient({
+      apiKey: okxConfig.apiKey,
+      secretKey: okxConfig.secretKey,
+      passphrase: okxConfig.passphrase,
+      syncSettle: true
+    });
+    const resourceServer = new x402ResourceServer(facilitator)
+      .register("eip155:196", new ExactEvmScheme());
+
+    return paymentMiddleware({
+      "GET /v1/crossings": {
+        accepts: {
+          scheme: "exact",
+          network: "eip155:196",
+          payTo: okxConfig.payToAddress,
+          price: `$${priceUsdt}`,
+          maxTimeoutSeconds: 60
+        },
+        description: "Access active convergence signals.",
+        mimeType: "application/json"
+      },
+      "GET /v1/token": {
+        accepts: {
+          scheme: "exact",
+          network: "eip155:196",
+          payTo: okxConfig.payToAddress,
+          price: `$${priceUsdt}`,
+          maxTimeoutSeconds: 60
+        },
+        description: "Access a token convergence signal.",
+        mimeType: "application/json"
+      }
+    }, resourceServer, undefined, undefined, false);
+  }
+
   return (request: Request, response: Response, next: NextFunction): void => {
     if (paymentMode === "disabled") {
       request.paymentState = "absent";

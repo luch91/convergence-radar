@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { AuditSink } from "./audit.js";
 import type { CacheStore } from "./cache.js";
-import { requirePayment, type PaymentMode } from "./payment.js";
+import { requirePayment, type OkxPaymentConfig, type PaymentMode } from "./payment.js";
 import { createRateLimit } from "./rate-limit.js";
 import type { DataRepository } from "./repository.js";
 
@@ -13,6 +13,7 @@ export interface ApiDependencies {
   auditSink: AuditSink;
   cache: CacheStore;
   paymentMode: PaymentMode;
+  okxPaymentConfig?: OkxPaymentConfig;
   now?: () => Date;
 }
 
@@ -27,6 +28,7 @@ export function createApi(dependencies: ApiDependencies) {
   const now = dependencies.now ?? (() => new Date());
 
   app.disable("x-powered-by");
+  app.set("trust proxy", 1);
   app.use(express.json({ limit: "32kb" }));
   app.use(createRateLimit(60, 60_000));
   app.use((request: Request, response: Response, next: NextFunction): void => {
@@ -51,7 +53,7 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json({ status: "ok" });
   });
 
-  app.get("/v1/crossings", requirePayment(dependencies.paymentMode, "0.5"), async (_request, response) => {
+  app.get("/v1/crossings", requirePayment(dependencies.paymentMode, "0.5", dependencies.okxPaymentConfig), async (_request, response) => {
     const cacheKey = "crossings:active";
     const cached = await dependencies.cache.get<object>(cacheKey);
     if (cached !== undefined) {
@@ -72,7 +74,7 @@ export function createApi(dependencies: ApiDependencies) {
         verificationStatus: signal.verificationStatus
       }));
     const payload = {
-      paymentStatus: "simulated",
+      paymentStatus: dependencies.paymentMode === "okx" ? "x402" : "simulated",
       source: "fixture",
       data: signals
     };
@@ -81,7 +83,7 @@ export function createApi(dependencies: ApiDependencies) {
     response.status(200).json(payload);
   });
 
-  app.get("/v1/token", requirePayment(dependencies.paymentMode, "0.5"), async (request, response) => {
+  app.get("/v1/token", requirePayment(dependencies.paymentMode, "0.5", dependencies.okxPaymentConfig), async (request, response) => {
     const address = request.query.address;
     if (typeof address !== "string" || !ADDRESS_PATTERN.test(address)) {
       response.status(400).json({
@@ -114,7 +116,7 @@ export function createApi(dependencies: ApiDependencies) {
     }
 
     const payload = {
-      paymentStatus: "simulated",
+      paymentStatus: dependencies.paymentMode === "okx" ? "x402" : "simulated",
       source: "fixture",
       data: {
         token: signal.tokenAddress,
