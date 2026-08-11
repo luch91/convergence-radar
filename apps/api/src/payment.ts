@@ -36,6 +36,15 @@ export function requirePayment(
       passphrase: okxConfig.passphrase,
       syncSettle: true
     });
+    void facilitator.getSupported().then((supported) => {
+      const capabilities = supported.kinds
+        .map((kind) => `${kind.x402Version}:${kind.scheme}:${kind.network}`)
+        .join(", ");
+      console.info(`OKX x402 supported payment capabilities: ${capabilities}`);
+    }).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error(`OKX x402 capability check failed: ${message}`);
+    });
     const resourceServer = new x402ResourceServer(facilitator)
       .register("eip155:196", new ExactEvmScheme());
 
