@@ -11,6 +11,7 @@ loadDotenv({ path: fileURLToPath(new URL("../../../.env", import.meta.url)) });
 
 const apiUrl = process.env.X402_TEST_API_URL ?? "https://convergence-radar.onrender.com/v1/crossings";
 const privateKey = process.env.BUYER_PRIVATE_KEY;
+const rpcUrl = process.env.X_LAYER_RPC_URL;
 
 if (process.env.CONFIRM_LIVE_PAYMENT !== "yes") {
   throw new Error("Set CONFIRM_LIVE_PAYMENT=yes before you run a live payment test.");
@@ -23,7 +24,7 @@ if (privateKey === undefined || !/^0x[a-fA-F0-9]{64}$/.test(privateKey)) {
 const account = privateKeyToAccount(privateKey as `0x${string}`);
 const publicClient = createPublicClient({
   chain: xLayer,
-  transport: http(process.env.X_LAYER_RPC_URL)
+  transport: http(rpcUrl === undefined || rpcUrl === "" ? undefined : rpcUrl)
 });
 const client = new x402Client();
 registerExactEvmScheme(client, {
