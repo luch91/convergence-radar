@@ -62,7 +62,7 @@ export function requirePayment(
         description: "Access a token convergence signal.",
         mimeType: "application/json"
       }
-    }, resourceServer, undefined, undefined, false);
+    }, resourceServer, undefined, undefined, true);
   }
 
   return (request: Request, response: Response, next: NextFunction): void => {
