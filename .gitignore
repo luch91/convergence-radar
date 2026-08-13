@@ -19,7 +19,6 @@ postgres-data/
 .local/
 
 # Local project records and contribution guidance
-/docs/architecture.md
 /CONTRIBUTING.md
 
 # Operating system and editor files
