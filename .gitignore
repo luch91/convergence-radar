@@ -18,6 +18,10 @@ postgres-data/
 # Personal working records
 .local/
 
+# Local project records and contribution guidance
+/docs/architecture.md
+/CONTRIBUTING.md
+
 # Operating system and editor files
 .DS_Store
 Thumbs.db
