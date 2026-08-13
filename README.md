@@ -1,34 +1,63 @@
 # Convergence Radar
 
-Convergence Radar is a paid signal service for token-buying convergence. It detects when four or more independent, tagged wallets buy one token during a 48-hour period.
+Convergence Radar is an experimental smart-money signal service. It detects a convergence when four or more independent, tagged wallets buy one token within a 48-hour period.
 
-The service returns the full performance record. It shows successful and unsuccessful signals. It uses an on-chain verification path for premium results.
+The current application uses fixture wallet activity. It does not publish live wallet data, performance metrics, failed-signal metrics, or on-chain verification results.
 
-## Project status
+## Current status
 
-This repository contains the project foundation. The product name is temporary. The name, visual identity, and public release material will be selected before submission.
+| Area | Status |
+| --- | --- |
+| Convergence rule and fixture ingestion | Implemented and tested. |
+| PostgreSQL repository and migration | Implemented. |
+| API, rate limit, audit record, and cache | Implemented. |
+| x402 payment challenge | Implemented for X Layer. Public payment settlement is disabled. |
+| Web dashboard | Deployed. It shows the API state and protected-feed state. |
+| Live OnchainOS ingestion | Not implemented. It needs an approved wallet registry and mapped provider response. |
+| Performance tracking | Schema only. Calculation and publication are not implemented. |
+| GenLayer verification | Not implemented. |
+| X Layer contracts | Not implemented. |
 
-## Product scope
+## Deployed services
 
-- API service with x402 payment checks.
-- Token and active-convergence endpoints.
-- Data ingestion from approved OnchainOS services.
-- PostgreSQL data store and Redis cache.
-- GenLayer intelligent contract for signal verification.
-- X Layer contracts for settlement, service registration, and optional oracle delivery.
+- API: `https://convergence-radar.onrender.com`
+- Dashboard: `https://convergence-radar-dashboard.onrender.com`
+
+The deployed API uses `DATA_SOURCE=fixture` and `PAYMENT_MODE=disabled`. The health endpoint is public. Protected signal endpoints return HTTP 503 until payment processing is enabled.
+
+## Product rule
+
+A token meets the baseline convergence rule when at least four unique, tagged wallets record a buy action for that token in a rolling 48-hour window.
+
+A convergence is not a recommendation or a forecast. It can lose value.
 
 ## Repository layout
 
 ```text
 apps/
-  api/                 API service
-  web/                 Web application
+  api/                 Express API service
+  web/                 Next.js dashboard
 contracts/
-  genlayer/            Intelligent contract source
-  xlayer/              Solidity contract source
+  genlayer/            Reserved for future intelligent contract source
+  xlayer/              Reserved for future Solidity contract source
+db/                    PostgreSQL migration source
 docs/                  Public technical documentation
 .local/decisions/      Local decision records, ignored by Git
 ```
+
+## Local use
+
+```text
+pnpm install
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm dev
+```
+
+`pnpm dev` starts the API service. Run `pnpm --filter @convergence-radar/web dev` to start the dashboard.
+
+Copy `.env.example` to `.env` before you add local configuration. Do not commit `.env`.
 
 ## Documentation
 
@@ -44,4 +73,4 @@ docs/                  Public technical documentation
 
 ## Safety notice
 
-The service provides data signals. It does not provide investment advice. A signal can lose value. Do not state or imply a guaranteed result.
+The service provides experimental market data. It does not provide investment advice. Do not state or imply a guaranteed result.

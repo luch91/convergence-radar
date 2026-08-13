@@ -2,40 +2,60 @@
 
 ## Purpose
 
-The system detects token-buying convergence from tagged wallet actions. It makes a paid result available through an API. A premium request can receive an on-chain verification result.
+The system detects token-buying convergence from tagged wallet actions. The current implementation uses fixture data. It provides an API and a web dashboard.
 
-## Components
+## Implemented components
 
-| Component | Responsibility |
-| --- | --- |
-| Web application | Lets a human view and request signals. |
-| API service | Validates payment, aggregates data, and returns results. |
-| Data ingestion worker | Reads wallet actions and token data on a fixed schedule. |
-| PostgreSQL | Stores normalized actions, signals, and performance data. |
-| Redis | Caches short-lived API and verification results. |
-| GenLayer contract | Produces and records a consensus-backed verification result. |
-| X Layer contracts | Support payment settlement, service registration, and oracle delivery. |
+| Component | Responsibility | Status |
+| --- | --- | --- |
+| Web application | Shows dashboard state and protected-feed state. | Deployed. |
+| API service | Reads stored signals and returns API responses. | Deployed. |
+| Fixture ingestion | Reads repeatable wallet-action data on a schedule. | Implemented. |
+| PostgreSQL repository | Stores normalized actions and signals when configured. | Implemented. |
+| Redis cache | Caches successful API responses when configured. | Implemented with memory fallback. |
+| x402 middleware | Creates a payment challenge when payment mode is enabled. | Implemented. Public settlement is disabled. |
 
-## Request flow
+## Planned components
+
+| Component | Intended responsibility | Status |
+| --- | --- | --- |
+| Live OnchainOS ingestion | Read approved tracked-wallet activity. | Not implemented. |
+| Performance service | Calculate and publish signal outcomes. | Not implemented. |
+| GenLayer contract | Verify a signal and record its result. | Not implemented. |
+| X Layer contracts | Add service registration and optional oracle delivery. | Not implemented. |
+
+## Current request flow
+
+```text
+Dashboard
+  -> API: request active convergences
+  <- API: HTTP 503 when public payment mode is disabled
+
+API
+  -> repository and cache: read fixture-derived signal data
+  <- API: health or protected-route response
+```
+
+## Optional x402 flow
 
 ```text
 Client
-  -> API: request a token signal or active convergences
-  <- API: HTTP 402 payment challenge, when payment is absent
+  -> API: request a protected route
+  <- API: HTTP 402 payment challenge, when payment mode is okx
 Client
-  -> API: request with payment authorization
+  -> API: request with signed payment authorization
 API
-  -> payment verifier: validate authorization
-  -> data store and cache: read current signal
-  -> GenLayer: request verification for premium result
-  <- API: paid result with source and verification status
+  -> OKX facilitator: verify and settle authorization
+  <- API: protected result after successful settlement
 ```
+
+The project verified the HTTP 402 challenge. It has not completed a funded mainnet buyer payment test.
 
 ## Convergence rule
 
 A token meets the baseline convergence rule when at least four unique, tagged wallets record a buy action for that token within a rolling 48-hour window.
 
-The implementation must define and test these items before public use:
+The implementation must define and test these items before public live-data use:
 
 - Wallet tag source and tag quality requirement.
 - Buy normalization rule.
@@ -44,7 +64,3 @@ The implementation must define and test these items before public use:
 - Time-source rule.
 - Signal replacement and expiration rule.
 - Performance measurement method.
-
-## Verification boundary
-
-The API must retain the raw input reference, the verification request identifier, the verdict, and the verification transaction reference. The API must identify an unverified result clearly.

@@ -1,23 +1,45 @@
 # Delivery Plan
 
-## Stage 1: Foundation and data engine
+## Phase 1: Foundation
 
-- Define the database schema for wallet actions, signals, and performance records.
-- Add the OnchainOS data adapters.
-- Implement the 48-hour convergence rule.
-- Add scheduled ingestion and repeatable tests.
+Status: complete for fixture development.
 
-## Stage 2: Verification and payments
+- Database migration and repository interfaces are implemented.
+- API configuration and local secret handling are implemented.
+- Fixture wallet activity and convergence-rule tests are implemented.
+
+## Phase 2: Data engine
+
+Status: complete for fixture data. Live ingestion is pending.
+
+- Normalization, duplicate removal, rolling-window calculation, and scheduled fixture ingestion are implemented.
+- The live source remains an adapter boundary. It needs an approved wallet registry and mapped provider response before use.
+
+## Phase 3: Paid API and web application
+
+Status: partially complete.
+
+- The API endpoints, cache, rate limit, audit record, and dashboard are implemented.
+- The dashboard and API are deployed on Render.
+- The OKX x402 challenge is implemented and was verified without payment.
+- A funded mainnet settlement test is deferred.
+- Performance history and risk enrichment are not implemented.
+
+## Phase 4: On-chain verification
+
+Status: not started.
 
 - Implement the GenLayer intelligent contract.
-- Deploy and test it on a test network.
-- Implement the HTTP 402 payment challenge and authorization checks.
-- Add the token and active-convergence API endpoints.
+- Add contract tests and a test-network deployment record.
+- Link API responses to verification identifiers.
+- Add X Layer contracts only when they have a defined requirement.
 
-## Stage 3: Release preparation
+## Phase 5: Release and submission
 
-- Deploy contracts and services to the selected production networks.
-- Add monitoring, audit logging, and failure alerts.
+Status: not started.
+
+- Add monitoring and an incident procedure.
+- Complete a security review.
 - Publish an API collection and demo script.
-- Select the final product name and logo.
-- Review documentation, licenses, security, and submission requirements.
+- Select the final project name and logo.
+- Prepare submission evidence and a demonstration video.

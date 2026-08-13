@@ -1,45 +1,55 @@
 # Deployment
 
-## Status
+## Current deployments
 
-The API can be deployed as a public web service for health checks and deployment validation. Protected endpoints must remain disabled until real x402 payment verification is enabled.
+| Service | URL | Current purpose |
+| --- | --- | --- |
+| API | `https://convergence-radar.onrender.com` | Health endpoint and protected API routes. |
+| Dashboard | `https://convergence-radar-dashboard.onrender.com` | Public project dashboard. |
+
+The API currently uses fixture data and disabled public payment processing. The dashboard shows a disabled, payment-required, or unavailable feed state when protected API data is not available.
 
 ## Required environment variables
 
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection URL. |
-| `DATA_SOURCE` | Set to `fixture` until live data access is approved. |
-| `PAYMENT_MODE` | Set to `disabled` before real payment verification is ready. |
-| `PAY_TO_ADDRESS` | Public X Layer address that receives x402 payments. Required only when payment mode is `okx`. |
-| `OKX_API_KEY` | OKX API key for payment verification and settlement. Required only when payment mode is `okx`. |
-| `OKX_SECRET_KEY` | Secret key for the OKX API key. Required only when payment mode is `okx`. |
-| `OKX_PASSPHRASE` | Passphrase for the OKX API key. Required only when payment mode is `okx`. |
+| `DATA_SOURCE` | Use `fixture` until live ingestion is implemented. |
+| `PAYMENT_MODE` | Use `disabled` for the public deployment. |
+| `API_BASE_URL` | API address used by the dashboard service. |
+| `PAY_TO_ADDRESS` | Public X Layer payment recipient. Required only in `okx` mode. |
+| `OKX_API_KEY` | OKX API key. Required only in `okx` mode or live-source work. |
+| `OKX_SECRET_KEY` | Secret key for the OKX API key. Required only in `okx` mode or live-source work. |
+| `OKX_PASSPHRASE` | Passphrase for the OKX API key. Required only in `okx` mode or live-source work. |
 
-Do not set `PORT`. The hosting provider supplies it.
+Do not set `PORT`. Render supplies it.
 
-## Render configuration
+## API Render configuration
 
 | Field | Value |
 | --- | --- |
 | Runtime | Node |
 | Node version | `22.22.2` |
-| Build command | `pnpm install --frozen-lockfile && pnpm build` |
+| Build command | `pnpm install --frozen-lockfile && pnpm --filter @convergence-radar/api build` |
 | Start command | `pnpm --filter @convergence-radar/api start` |
 | Health check path | `/health` |
 
-## Deployment verification
+## Dashboard Render configuration
 
-Request the public `/health` endpoint. It must return HTTP 200. Confirm that a protected endpoint returns HTTP 503 while payment mode is disabled.
+| Field | Value |
+| --- | --- |
+| Runtime | Node |
+| Node version | `22.22.2` |
+| Build command | `pnpm install --frozen-lockfile && pnpm --filter @convergence-radar/web build` |
+| Start command | `pnpm --filter @convergence-radar/web start` |
+| Environment | `API_BASE_URL=https://convergence-radar.onrender.com` |
 
-## x402 activation
+## Verification
 
-The service uses the official OKX x402 Express SDK. It protects `GET /v1/crossings` and `GET /v1/token` with an exact payment of 0.5 USDT0 on X Layer.
+Request the API `/health` endpoint. It must return HTTP 200. When payment mode is disabled, protected endpoints must return HTTP 503.
 
-Keep `PAYMENT_MODE=disabled` until the application code is deployed and a controlled buyer test is planned. To enable payment settlement, set `PAYMENT_MODE=okx` in Render and deploy the current release. This change can settle valid buyer authorizations. Verify the recipient address before you enable it.
+## x402 payment status
 
-## Controlled payment test
+The code supports an exact 0.5 USDT0 payment on X Layer when `PAYMENT_MODE=okx`. The HTTP 402 challenge was verified. The project has not completed a funded mainnet buyer payment test.
 
-Use a separate buyer wallet. Fund it with at least 0.5 USDT0 on X Layer. Do not use the recipient wallet as the buyer wallet.
-
-Set `BUYER_PRIVATE_KEY` and `CONFIRM_LIVE_PAYMENT=yes` in the local `.env` file. Do not commit this file or send the private key to another person. Run `pnpm --filter @convergence-radar/api test:x402` from the repository root. The command sends one live payment of 0.5 USDT0 to the configured recipient.
+Do not enable `okx` mode in a public service unless you intend to accept signed payment authorizations.

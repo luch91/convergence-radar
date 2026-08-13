@@ -22,7 +22,7 @@ The command records each completed migration in `schema_migrations`. It does not
 - `wallet_actions` stores normalized wallet activity.
 - `signals` stores detected convergence results.
 - `signal_wallet_actions` links a signal to its source actions.
-- `performance_metrics` stores measured price outcomes.
+- `performance_metrics` reserves storage for measured price outcomes. The application does not calculate or publish these outcomes yet.
 
 ## Local safety
 

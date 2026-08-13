@@ -30,7 +30,7 @@ The engine does not count sell actions. It counts one wallet once per signal. Th
 
 ## Data sources
 
-`FixtureWalletActivitySource` provides repeatable local data. `LiveWalletActivitySource` is an adapter boundary for an approved live wallet-activity endpoint. The live endpoint is not enabled until the team confirms the provider request and response contract.
+`FixtureWalletActivitySource` provides repeatable local data. `LiveWalletActivitySource` is an adapter boundary only. It throws an error because the project does not yet have an approved tracked-wallet registry or mapped transaction-history response.
 
 The application reads `.env` locally. It signs Open API requests with `OKX_API_KEY`, `OKX_SECRET_KEY`, and `OKX_PASSPHRASE`. Run `pnpm check:okx` to verify credentials with a read-only supported-chain request. This command does not submit a transaction or change account data.
 
@@ -44,4 +44,4 @@ pnpm build
 pnpm --filter @convergence-radar/api start
 ```
 
-Set `DATA_SOURCE=fixture` for local development. Copy `.env.example` to `.env` when configuration is required.
+Set `DATA_SOURCE=fixture` for local development and public deployment. Copy `.env.example` to `.env` when configuration is required.
