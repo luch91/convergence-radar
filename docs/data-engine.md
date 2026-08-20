@@ -26,7 +26,9 @@ The engine identifies one wallet action by transaction hash and log index. It re
 
 The engine groups buy actions by chain and token. It evaluates each buy action as the end of a rolling 48-hour window. It creates a signal when the unique-buyer count crosses from fewer than four to four or more.
 
-The engine does not count sell actions. It counts one wallet once per signal. The output is unverified until the on-chain verification phase completes.
+The engine does not count sell actions. It counts one wallet once per signal. Each fixture-derived signal stores a point-in-time cohort snapshot and a provenance hash. The output remains unverified until an on-chain verification phase completes.
+
+The cohort snapshot records the selected wallet addresses and tags at the observation time. The provenance hash includes the selected source actions, cohort snapshot hash, normalization version, rule version, dataset version, and calculation method version. The in-memory and PostgreSQL repositories do not replace an existing signal identifier.
 
 ## Data sources
 

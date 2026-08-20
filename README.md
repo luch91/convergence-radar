@@ -16,7 +16,7 @@ The repository contains an experimental foundation for the target product. It us
 | x402 payment challenge | Implemented for X Layer. Public payment settlement is disabled. |
 | Web dashboard | Deployed. It identifies fixture-derived signals as unverified. |
 | Live OnchainOS ingestion | Not implemented. It needs an approved wallet registry and mapped provider response. |
-| Point-in-time cohort snapshots and provenance hashes | Not implemented. |
+| Point-in-time cohort snapshots and provenance hashes | Implemented for fixture-derived baseline observations. |
 | Calibration and execution-aware measurement | Not implemented. |
 | Evidence-object API routes | Not implemented. |
 | GenLayer provenance registry | Not implemented. |
@@ -38,7 +38,7 @@ The evidence chain is:
 raw event -> normalization -> cohort snapshot -> observation -> calibration -> outcome
 ```
 
-Every completed observation must identify its cohort version, rule version, calculation method, dataset version, and provenance hash. A future GenLayer registry can provide an immutable provenance reference. No GenLayer contract source or deployment exists yet.
+Each fixture-derived baseline observation identifies its cohort version, rule version, calculation method, dataset version, and provenance hash. A future GenLayer registry can provide an immutable on-chain provenance reference. No GenLayer contract source or deployment exists yet.
 
 ## Baseline rule
 

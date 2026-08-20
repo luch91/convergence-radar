@@ -1,5 +1,11 @@
 import { createHash } from "node:crypto";
-import type { RawWalletAction, WalletAction } from "./domain.js";
+import type {
+  CohortMember,
+  CohortSnapshot,
+  ObservationProvenance,
+  RawWalletAction,
+  WalletAction
+} from "./domain.js";
 
 const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 const TRANSACTION_PATTERN = /^0x[a-fA-F0-9]{64}$/;
@@ -28,6 +34,70 @@ export function actionId(transactionHash: string, logIndex: number): string {
 export function signalId(chainId: number, tokenAddress: string, windowEnd: Date): string {
   const input = `${chainId}:${tokenAddress}:${windowEnd.toISOString()}`;
   return createHash("sha256").update(input).digest("hex");
+}
+
+function contentHash(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+export function cohortSnapshot(
+  members: CohortMember[],
+  snapshotAt: Date,
+  version: string,
+  qualificationMethod: string
+): CohortSnapshot {
+  const orderedMembers = [...members].sort((left, right) =>
+    left.walletAddress.localeCompare(right.walletAddress)
+  );
+  const snapshotHash = contentHash({
+    version,
+    qualificationMethod,
+    snapshotAt: snapshotAt.toISOString(),
+    members: orderedMembers
+  });
+
+  return {
+    id: snapshotHash,
+    version,
+    qualificationMethod,
+    snapshotAt,
+    snapshotHash,
+    members: orderedMembers
+  };
+}
+
+export function observationProvenance(
+  actions: WalletAction[],
+  cohort: CohortSnapshot,
+  normalizationVersion: string,
+  ruleVersion: string,
+  datasetVersion: string,
+  calculationMethodVersion: string
+): ObservationProvenance {
+  const orderedActions = [...actions]
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((action) => ({
+      id: action.id,
+      transactionHash: action.transactionHash,
+      logIndex: action.logIndex,
+      occurredAt: action.occurredAt.toISOString(),
+      source: action.source
+    }));
+
+  return {
+    normalizationVersion,
+    ruleVersion,
+    datasetVersion,
+    calculationMethodVersion,
+    provenanceHash: contentHash({
+      actions: orderedActions,
+      cohortSnapshotHash: cohort.snapshotHash,
+      normalizationVersion,
+      ruleVersion,
+      datasetVersion,
+      calculationMethodVersion
+    })
+  };
 }
 
 export function normalizeWalletAction(raw: RawWalletAction): WalletAction {

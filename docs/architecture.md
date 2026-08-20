@@ -39,6 +39,7 @@ The API service and web dashboard run as separate Render web services. The dashb
 | Ingestion service | Reads activity, normalizes records, detects convergence, and stores results. | Runs at startup and on the configured interval. |
 | Fixture activity source | Provides repeatable test wallet actions. | Used by local development and the public deployment. |
 | Convergence detector | Counts distinct wallet addresses for each chain and token. | Creates a signal when the count first reaches four in a 48-hour rolling window. |
+| Cohort and provenance builder | Captures the cohort and construction inputs at the observation time. | Creates immutable fixture-derived cohort snapshots and provenance hashes. |
 | Data repository | Stores actions and signals. | Uses PostgreSQL when configured. Otherwise it uses memory and loses data on restart. |
 | Cache | Caches successful protected-route responses for 60 seconds. | Uses Redis when available. It falls back to memory if Redis is unavailable. |
 | Audit sink | Records request metadata. | The current sink is in memory only. It does not create durable audit records. |
@@ -50,7 +51,7 @@ Each normalized wallet action has a chain ID, token address, wallet address, wal
 
 The repository accepts an action once for each transaction-hash and log-index pair. The detector ignores sell actions. It groups buy actions by chain ID and token address. At every action time, it counts the most recent buy action from each distinct wallet within the preceding 48 hours. It creates a signal when the count crosses from fewer than four buyers to four or more buyers.
 
-Each current signal has the status `unverified`. The system does not calculate a confidence score, token liquidity, token risk, price change, drawdown, or historical outcome.
+Each current signal has the status `unverified`. Each fixture-derived baseline signal stores source-action links, a point-in-time cohort snapshot, normalization version, rule version, dataset version, calculation method version, and provenance hash. The system does not calculate a confidence score, token liquidity, token risk, price change, drawdown, or historical outcome.
 
 ## Request behavior
 
@@ -93,7 +94,7 @@ API credentials, payment secrets, database URLs, and Redis URLs must exist only 
 - A mapped OnchainOS transaction-history response.
 - Live wallet ingestion.
 - Durable audit logging.
-- Signal expiration and replacement rules.
+- Signal expiration rules and a public correction workflow.
 - Token metadata, liquidity, and security enrichment.
 - Historical performance calculations and failed-signal reporting.
 - GenLayer intelligent-contract source or deployment.

@@ -1,5 +1,9 @@
 export const CONVERGENCE_WINDOW_MS = 48 * 60 * 60 * 1000;
 export const MINIMUM_UNIQUE_BUYERS = 4;
+export const NORMALIZATION_VERSION = "v1";
+export const CONVERGENCE_RULE_VERSION = "v1";
+export const DATASET_VERSION = "fixture-v1";
+export const CALCULATION_METHOD_VERSION = "baseline-convergence-v1";
 
 export type ChainId = number;
 
@@ -22,6 +26,28 @@ export interface WalletAction extends Omit<RawWalletAction, "occurredAt"> {
   occurredAt: Date;
 }
 
+export interface CohortMember {
+  walletAddress: string;
+  walletTag: string;
+}
+
+export interface CohortSnapshot {
+  id: string;
+  version: string;
+  qualificationMethod: string;
+  snapshotAt: Date;
+  snapshotHash: string;
+  members: CohortMember[];
+}
+
+export interface ObservationProvenance {
+  normalizationVersion: string;
+  ruleVersion: string;
+  datasetVersion: string;
+  calculationMethodVersion: string;
+  provenanceHash: string;
+}
+
 export interface ConvergenceSignal {
   id: string;
   chainId: ChainId;
@@ -32,6 +58,8 @@ export interface ConvergenceSignal {
   windowEnd: Date;
   createdAt: Date;
   sourceActionIds: string[];
+  cohortSnapshot: CohortSnapshot;
+  provenance: ObservationProvenance;
   verificationStatus: "unverified";
 }
 

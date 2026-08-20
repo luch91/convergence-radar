@@ -42,6 +42,21 @@ async function saveSignal(repository: InMemoryDataRepository): Promise<void> {
     windowEnd: new Date("2026-08-09T01:00:00.000Z"),
     createdAt: new Date("2026-08-09T01:00:00.000Z"),
     sourceActionIds: ["one", "two", "three", "four"],
+    cohortSnapshot: {
+      id: "b".repeat(64),
+      version: "source-wallet-tag-v1",
+      qualificationMethod: "test",
+      snapshotAt: new Date("2026-08-09T01:00:00.000Z"),
+      snapshotHash: "b".repeat(64),
+      members: []
+    },
+    provenance: {
+      normalizationVersion: "v1",
+      ruleVersion: "v1",
+      datasetVersion: "fixture-v1",
+      calculationMethodVersion: "baseline-convergence-v1",
+      provenanceHash: "c".repeat(64)
+    },
     verificationStatus: "unverified"
   };
   await repository.saveSignals([signal]);

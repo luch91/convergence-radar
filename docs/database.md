@@ -22,7 +22,11 @@ The command records each completed migration in `schema_migrations`. It does not
 - `wallet_actions` stores normalized wallet activity.
 - `signals` stores detected convergence results.
 - `signal_wallet_actions` links a signal to its source actions.
+- `cohort_snapshots` stores immutable point-in-time wallet membership and qualification data.
+- `signal_provenance` links a signal to its cohort snapshot, method versions, and provenance hash.
 - `performance_metrics` reserves storage for measured price outcomes. The application does not calculate or publish these outcomes yet.
+
+Migration `002_add_signal_provenance` adds the cohort and provenance tables. The migration runner applies ordered SQL migration files once and records each applied name in `schema_migrations`.
 
 ## Local safety
 

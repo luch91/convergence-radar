@@ -28,6 +28,9 @@ describe("detectConvergences", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.buyerCount).toBe(4);
+    expect(result[0]?.cohortSnapshot.members).toHaveLength(4);
+    expect(result[0]?.cohortSnapshot.snapshotHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(result[0]?.provenance.provenanceHash).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it("does not count repeated buys from one wallet as separate buyers", () => {

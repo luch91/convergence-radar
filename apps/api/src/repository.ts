@@ -1,11 +1,28 @@
 import { Pool, type PoolClient } from "pg";
-import type { ConvergenceSignal, WalletAction } from "./domain.js";
+import type { CohortMember, ConvergenceSignal, WalletAction } from "./domain.js";
 
 export interface DataRepository {
   saveActions(actions: WalletAction[]): Promise<{ accepted: WalletAction[]; duplicateCount: number }>;
   listActions(): Promise<WalletAction[]>;
   saveSignals(signals: ConvergenceSignal[]): Promise<void>;
   listSignals(): Promise<ConvergenceSignal[]>;
+}
+
+function copySignal(signal: ConvergenceSignal): ConvergenceSignal {
+  return {
+    ...signal,
+    buyerAddresses: [...signal.buyerAddresses],
+    windowStart: new Date(signal.windowStart),
+    windowEnd: new Date(signal.windowEnd),
+    createdAt: new Date(signal.createdAt),
+    sourceActionIds: [...signal.sourceActionIds],
+    cohortSnapshot: {
+      ...signal.cohortSnapshot,
+      snapshotAt: new Date(signal.cohortSnapshot.snapshotAt),
+      members: signal.cohortSnapshot.members.map((member) => ({ ...member }))
+    },
+    provenance: { ...signal.provenance }
+  };
 }
 
 export class InMemoryDataRepository implements DataRepository {
@@ -34,12 +51,14 @@ export class InMemoryDataRepository implements DataRepository {
 
   async saveSignals(signals: ConvergenceSignal[]): Promise<void> {
     for (const signal of signals) {
-      this.signals.set(signal.id, signal);
+      if (!this.signals.has(signal.id)) {
+        this.signals.set(signal.id, copySignal(signal));
+      }
     }
   }
 
   async listSignals(): Promise<ConvergenceSignal[]> {
-    return [...this.signals.values()];
+    return [...this.signals.values()].map(copySignal);
   }
 }
 
@@ -67,6 +86,17 @@ interface SignalRow {
   verification_status: "unverified";
   buyer_addresses: string[];
   source_action_ids: string[];
+  cohort_snapshot_id: string;
+  cohort_version: string;
+  qualification_method: string;
+  snapshot_at: Date;
+  snapshot_hash: string;
+  cohort_members: CohortMember[];
+  normalization_version: string;
+  rule_version: string;
+  dataset_version: string;
+  calculation_method_version: string;
+  provenance_hash: string;
 }
 
 function mapAction(row: ActionRow): WalletAction {
@@ -95,6 +125,21 @@ function mapSignal(row: SignalRow): ConvergenceSignal {
     windowEnd: row.window_end,
     createdAt: row.created_at,
     sourceActionIds: row.source_action_ids,
+    cohortSnapshot: {
+      id: row.cohort_snapshot_id,
+      version: row.cohort_version,
+      qualificationMethod: row.qualification_method,
+      snapshotAt: row.snapshot_at,
+      snapshotHash: row.snapshot_hash,
+      members: row.cohort_members
+    },
+    provenance: {
+      normalizationVersion: row.normalization_version,
+      ruleVersion: row.rule_version,
+      datasetVersion: row.dataset_version,
+      calculationMethodVersion: row.calculation_method_version,
+      provenanceHash: row.provenance_hash
+    },
     verificationStatus: row.verification_status
   };
 }
@@ -177,6 +222,20 @@ export class PostgresDataRepository implements DataRepository {
       await client.query("BEGIN");
       for (const signal of signals) {
         await client.query(
+          `INSERT INTO cohort_snapshots (
+             id, version, qualification_method, snapshot_at, snapshot_hash, members
+           ) VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            signal.cohortSnapshot.id,
+            signal.cohortSnapshot.version,
+            signal.cohortSnapshot.qualificationMethod,
+            signal.cohortSnapshot.snapshotAt,
+            signal.cohortSnapshot.snapshotHash,
+            JSON.stringify(signal.cohortSnapshot.members)
+          ]
+        );
+        await client.query(
           `INSERT INTO signals (
              id, chain_id, token_address, buyer_count, window_start, window_end,
              verification_status, created_at
@@ -191,6 +250,22 @@ export class PostgresDataRepository implements DataRepository {
             signal.windowEnd,
             signal.verificationStatus,
             signal.createdAt
+          ]
+        );
+        await client.query(
+          `INSERT INTO signal_provenance (
+             signal_id, cohort_snapshot_id, normalization_version, rule_version,
+             dataset_version, calculation_method_version, provenance_hash
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (signal_id) DO NOTHING`,
+          [
+            signal.id,
+            signal.cohortSnapshot.id,
+            signal.provenance.normalizationVersion,
+            signal.provenance.ruleVersion,
+            signal.provenance.datasetVersion,
+            signal.provenance.calculationMethodVersion,
+            signal.provenance.provenanceHash
           ]
         );
         for (const actionId of signal.sourceActionIds) {
@@ -222,6 +297,17 @@ export class PostgresDataRepository implements DataRepository {
          signals.window_end,
          signals.created_at,
          signals.verification_status,
+         signal_provenance.cohort_snapshot_id,
+         cohort_snapshots.version AS cohort_version,
+         cohort_snapshots.qualification_method,
+         cohort_snapshots.snapshot_at,
+         cohort_snapshots.snapshot_hash,
+         cohort_snapshots.members AS cohort_members,
+         signal_provenance.normalization_version,
+         signal_provenance.rule_version,
+         signal_provenance.dataset_version,
+         signal_provenance.calculation_method_version,
+         signal_provenance.provenance_hash,
          COALESCE(
            ARRAY_AGG(wallet_actions.wallet_address ORDER BY wallet_actions.wallet_address)
              FILTER (WHERE wallet_actions.wallet_address IS NOT NULL),
@@ -233,9 +319,23 @@ export class PostgresDataRepository implements DataRepository {
            ARRAY[]::text[]
          ) AS source_action_ids
        FROM signals
+       INNER JOIN signal_provenance ON signal_provenance.signal_id = signals.id
+       INNER JOIN cohort_snapshots ON cohort_snapshots.id = signal_provenance.cohort_snapshot_id
        LEFT JOIN signal_wallet_actions ON signal_wallet_actions.signal_id = signals.id
        LEFT JOIN wallet_actions ON wallet_actions.id = signal_wallet_actions.wallet_action_id
-       GROUP BY signals.id
+       GROUP BY
+         signals.id,
+         signal_provenance.cohort_snapshot_id,
+         cohort_snapshots.version,
+         cohort_snapshots.qualification_method,
+         cohort_snapshots.snapshot_at,
+         cohort_snapshots.snapshot_hash,
+         cohort_snapshots.members,
+         signal_provenance.normalization_version,
+         signal_provenance.rule_version,
+         signal_provenance.dataset_version,
+         signal_provenance.calculation_method_version,
+         signal_provenance.provenance_hash
        ORDER BY signals.window_end DESC`
     );
     return result.rows.map(mapSignal);

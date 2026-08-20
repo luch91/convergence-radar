@@ -1,5 +1,5 @@
 import { config as loadDotenv } from "dotenv";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
 
@@ -10,8 +10,7 @@ if (databaseUrl === undefined || databaseUrl === "") {
   throw new Error("DATABASE_URL is required to run database migrations.");
 }
 
-const migrationName = "001_initial_schema";
-const migrationPath = fileURLToPath(new URL("../../../db/migrations/001_initial_schema.sql", import.meta.url));
+const migrationDirectory = fileURLToPath(new URL("../../../db/migrations/", import.meta.url));
 const pool = new Pool({ connectionString: databaseUrl });
 
 try {
@@ -21,14 +20,22 @@ try {
        applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
      )`
   );
-  const existing = await pool.query<{ name: string }>(
-    "SELECT name FROM schema_migrations WHERE name = $1",
-    [migrationName]
-  );
-  if (existing.rowCount === 1) {
-    console.log(`Migration ${migrationName} is already applied.`);
-  } else {
-    const sql = await readFile(migrationPath, "utf8");
+  const migrationNames = (await readdir(migrationDirectory))
+    .filter((name) => /^\d+_.+\.sql$/.test(name))
+    .sort();
+
+  for (const fileName of migrationNames) {
+    const migrationName = fileName.replace(/\.sql$/, "");
+    const existing = await pool.query<{ name: string }>(
+      "SELECT name FROM schema_migrations WHERE name = $1",
+      [migrationName]
+    );
+    if (existing.rowCount === 1) {
+      console.log(`Migration ${migrationName} is already applied.`);
+      continue;
+    }
+
+    const sql = await readFile(`${migrationDirectory}${fileName}`, "utf8");
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
